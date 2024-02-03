@@ -1,1 +1,1 @@
-Contributors: @lazyprogrammerP
+Contributors: @lazyprogrammerP, @loldp, @lakshyavsaini
