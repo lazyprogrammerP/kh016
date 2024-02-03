@@ -20,21 +20,6 @@ async function zkBobExample(): Promise<void> {
         ddSubgraph: "zkbob-bob-goerli",
       },
     },
-    chains: {
-      "11155111": {
-        rpcUrls: ["https://sepolia.infura.io/v3/2a219563d6f8480db0e2ce66bcd8f29e", "https://eth-sepolia-public.unifra.io"],
-      },
-      "5": {
-        rpcUrls: ["https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"],
-      },
-      "420": {
-        rpcUrls: ["https://goerli.optimism.io"],
-      },
-    },
-    snarkParams: {
-      transferParamsUrl: "https://r2-staging.zkbob.com/transfer_params_20022023.bin",
-      transferVkUrl: "https://r2-staging.zkbob.com/transfer_verification_key_20022023.json",
-    },
   };
 
   // creating a zkBob client without account to be worked on 'BOB-sepolia' pool
