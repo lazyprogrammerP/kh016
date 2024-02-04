@@ -133,7 +133,7 @@ kycRouter.post(`/approve`, validateToken, async (req: express.Request<null, Succ
       return res.status(400).send({ success: false, message: "error: cannot find user credentials" });
     }
 
-    fs.writeFileSync("circuits/zk-age-constraint/verification.json", JSON.stringify(user.ageVerificationJSON));
+    fs.writeFileSync("circuits/zk-age-constraint/verification_key.json", JSON.stringify(user.ageVerificationJSON));
     fs.writeFileSync("circuits/zk-age-constraint/proof.json", JSON.stringify(req.body.ageProofJSON));
     fs.writeFileSync("circuits/zk-age-constraint/public.json", JSON.stringify(user.agePublicJSON));
 
@@ -148,6 +148,10 @@ kycRouter.post(`/approve`, validateToken, async (req: express.Request<null, Succ
           ],
           { stdio: ["pipe", "pipe", "pipe"] }
         );
+
+        keygen.stdout.on("data", (data) => {
+          console.log(data.toString());
+        });
 
         keygen.on("close", (code) => {
           if (code === 1) {
