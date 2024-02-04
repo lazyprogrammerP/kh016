@@ -18,7 +18,7 @@ kycRouter.post(`/credentials`, validateToken, async (req: express.Request<null, 
   // TODO: add a third-part API that can verify this information
 
   fs.writeFileSync("circuits/zk-age-constraint/input.json", JSON.stringify(req.body.ageRestriction));
-  await new Promise((resolve) => {
+  const ageRestrictionRunner = new Promise((resolve) => {
     const keygen = spawn(
       "bash",
       [
@@ -46,12 +46,8 @@ kycRouter.post(`/credentials`, validateToken, async (req: express.Request<null, 
     });
   });
 
-  const ageVerificationJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/verification_key.json", "utf8"));
-  const ageProofJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/proof.json", "utf8"));
-  const agePublicJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/public.json", "utf8"));
-
   fs.writeFileSync("circuits/zk-country-constraint/input.json", JSON.stringify(req.body.countryRestriction));
-  await new Promise((resolve) => {
+  const countryRestrictionRunner = new Promise((resolve) => {
     const keygen = spawn(
       "bash",
       [
@@ -79,13 +75,19 @@ kycRouter.post(`/credentials`, validateToken, async (req: express.Request<null, 
     });
   });
 
+  await Promise.all([ageRestrictionRunner, countryRestrictionRunner]);
+
+  const ageVerificationJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/verification_key.json", "utf8"));
+  const ageProofJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/proof.json", "utf8"));
+  const agePublicJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/public.json", "utf8"));
+
   const countryVerificationJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/verification_key.json", "utf8"));
   const countryProofJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/proof.json", "utf8"));
   const countryPublicJSON = JSON.parse(fs.readFileSync("circuits/zk-age-constraint/public.json", "utf8"));
 
-  const userId = req.cookies["user-id"];
+  const uid = req.cookies["uid"];
   await prisma.user.update({
-    where: { uid: userId },
+    where: { uid: uid },
     data: {
       ageVerificationJSON: ageVerificationJSON,
       agePublicJSON: agePublicJSON,
@@ -103,8 +105,8 @@ kycRouter.post(`/verify`, validateToken, async (req: express.Request<null, IKYCC
 
   // TODO: add a third-part API that can verify this information
 
-  const userId = req.cookies["user-id"];
-  let user = await prisma.user.findFirst({ where: { uid: userId } });
+  const uid = req.cookies["uid"];
+  let user = await prisma.user.findFirst({ where: { uid: uid } });
 
   if (!user?.ageVerificationJSON || !user?.agePublicJSON) {
     return res.status(400).send({ success: false, message: "error: cannot find user credentials" });
@@ -118,23 +120,32 @@ kycRouter.post(`/verify`, validateToken, async (req: express.Request<null, IKYCC
   fs.writeFileSync("circuits/zk-age-constraint/proof.json", JSON.stringify(req.body.ageProofJSON));
   fs.writeFileSync("circuits/zk-age-constraint/public.json", JSON.stringify(user.agePublicJSON));
 
-  await new Promise((resolve) => {
-    const keygen = spawn(
-      "bash",
-      [
-        "-c",
-        `cd circuits/zk-age-constraint && \
+  try {
+    await new Promise((resolve, reject) => {
+      const keygen = spawn(
+        "bash",
+        [
+          "-c",
+          `cd circuits/zk-age-constraint && \
       npx snarkjs groth16 verify verification_key.json public.json proof.json`,
-      ],
-      { stdio: ["pipe", "pipe", "pipe"] }
-    );
+        ],
+        { stdio: ["pipe", "pipe", "pipe"] }
+      );
 
-    keygen.on("close", (code) => {
-      console.log("Code: ", code);
+      keygen.on("close", (code) => {
+        if (code === 1) {
+          reject("exit code 1");
+          return;
+        }
+
+        resolve("exit code 0");
+      });
     });
-  });
 
-  return res.status(200).send({ success: true, message: "CHANGE THIS NOW." });
+    return res.status(200).send({ success: true, message: "user claim has been verified" });
+  } catch (error) {
+    return res.status(401).send({ success: false, message: "user claim could not be verified" });
+  }
 });
 
 export default kycRouter;

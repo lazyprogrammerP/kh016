@@ -34,7 +34,7 @@ authRouter.post("/register", async (req: express.Request<null, SuccessResponse, 
     return res.status(400).send({ success: false, message: "error: user with this uid already exists" });
   }
 
-  prisma.user.create({
+  await prisma.user.create({
     data: {
       uid: req.body.uid,
       salt: req.body.salt,
