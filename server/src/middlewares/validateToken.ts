@@ -18,12 +18,13 @@ const validateToken = (req: any, res: any, next: any) => {
 
     const isValidJWT = jwt.verify(accessToken, JWT_SECRET_KEY);
     if (isValidJWT) {
-      req.cookies["uid"] = jwt.decode(accessToken);
+      req.cookies = { uid: (jwt.decode(accessToken) as any)?.userId };
       next();
     } else {
       return res.status(401).send({ success: false, message: "error: jwt token has expired" });
     }
   } catch (error) {
+    console.log(error);
     return res.status(401).send({ success: false, message: "error: jwt token is invalid" });
   }
 };
