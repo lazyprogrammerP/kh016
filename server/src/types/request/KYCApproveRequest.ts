@@ -1,4 +1,5 @@
-interface IKYCVerifyRequest {
+interface IKYCApproveRequest {
+  requestId: number;
   ageProofJSON: {
     [keyName: string]: any;
   };
@@ -7,4 +8,4 @@ interface IKYCVerifyRequest {
   };
 }
 
-export default IKYCVerifyRequest;
+export default IKYCApproveRequest;

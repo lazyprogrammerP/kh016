@@ -41,7 +41,7 @@ export default function DashboardPage() {
       <p className={"lg:text-lg text-gray-500"}>Please wait as we verify your identity!</p>
     </div>
   ) : (
-    <div className={"w-full h-screen p-4 lg:p-8 space-y-4 lg:space-y-8 bg-gray-50"}>
+    <div className={"w-full min-h-screen p-4 lg:p-8 space-y-4 lg:space-y-8 bg-gray-50"}>
       <Nav />
       <main className={"py-4 lg:p-4 space-y-6"}>
         <KYCCredentialsForm />

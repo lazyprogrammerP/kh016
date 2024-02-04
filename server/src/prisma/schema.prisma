@@ -10,6 +10,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Request {
+  id Int @id @default(sequence())
+
+  organizationId String
+  userId         String
+
+  webhookCall String
+
+  @@unique([organizationId, userId])
+}
+
 model User {
   id                   Int     @id @default(sequence())
   uid                  String  @unique
