@@ -8,6 +8,7 @@ import IKYCApproveRequest from "../types/request/KYCApproveRequest";
 import IKYCCredentialsRequest from "../types/request/KYCCredentialsRequest";
 import IKYCRequest from "../types/request/KYCRequest";
 import IKYCCredentialsResponse from "../types/response/KYCCredentialsResponse";
+import IKYCRequestResponse from "../types/response/KYCRequestResponse";
 import SuccessResponse from "../types/response/SuccessResponse";
 
 const kycRouter = express.Router();
@@ -116,7 +117,7 @@ kycRouter.post(`/credentials`, validateToken, async (req: express.Request<null, 
   return res.status(200).send({ ageProofJSON });
 });
 
-kycRouter.post(`/approve`, validateToken, async (req: express.Request<null, IKYCCredentialsResponse, IKYCApproveRequest, null>, res: express.Response<IKYCCredentialsResponse | SuccessResponse>) => {
+kycRouter.post(`/approve`, validateToken, async (req: express.Request<null, SuccessResponse, IKYCApproveRequest, null>, res: express.Response<SuccessResponse>) => {
   assert(req.body.requestId, "error: please provide the requestId field");
   assert(req.body.ageProofJSON, "error: please provide the ageRestriction criteria");
   // assert(req.body.countryProofJSON, "error: please provide the countryRestriction criteria");
@@ -171,7 +172,17 @@ kycRouter.post(`/approve`, validateToken, async (req: express.Request<null, IKYC
   // }
 });
 
-kycRouter.post(`/request`, async (req: express.Request<null, IKYCCredentialsResponse, IKYCRequest, null>, res: express.Response<IKYCCredentialsResponse | SuccessResponse>) => {
+kycRouter.get(`/request`, validateToken, async (req: express.Request<null, IKYCRequestResponse, IKYCRequest, null>, res: express.Response<IKYCRequestResponse>) => {
+  const uid = req.cookies["uid"];
+
+  const requests = await prisma.request.findMany({
+    where: { userId: uid },
+  });
+
+  return res.status(200).send({ requests: requests });
+});
+
+kycRouter.post(`/request`, async (req: express.Request<null, IKYCRequestResponse | SuccessResponse, IKYCRequest, null>, res: express.Response<IKYCRequestResponse | SuccessResponse>) => {
   assert(req.body.organizationName);
   assert(req.body.uid);
   assert(req.body.webhookCall);
@@ -185,7 +196,7 @@ kycRouter.post(`/request`, async (req: express.Request<null, IKYCCredentialsResp
     return res.status(400).send({ success: false, message: "error: cannot find user credentials" });
   }
 
-  await prisma.request.create({
+  const request = await prisma.request.create({
     data: {
       organizationId: req.body.organizationName,
       userId: req.body.uid,
@@ -193,7 +204,7 @@ kycRouter.post(`/request`, async (req: express.Request<null, IKYCCredentialsResp
     },
   });
 
-  return res.status(200).send({ success: true, message: "The request has been created successfully. Please wait until the user approves it." });
+  return res.status(200).send({ requests: [request] });
 });
 
 export default kycRouter;
