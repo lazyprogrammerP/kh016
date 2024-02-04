@@ -30,12 +30,14 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@prisma/client": "^5.9.1",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "secure-remote-password": "^0.3.1"
+    "secure-remote-password": "^0.3.1",
+    "snarkjs": "^0.7.3"
   }
 }
